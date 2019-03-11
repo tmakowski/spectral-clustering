@@ -1,0 +1,142 @@
+---
+header-includes:
+- \usepackage{geometry}
+- \geometry{top = 1.7cm, left = 1.5cm, right = 1.5cm, bottom = 1.9cm}
+output:
+    pdf_document: default
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo=FALSE, fig.align='center', results='asis')
+```
+
+```{r, include=FALSE}
+library('ggplot2')
+
+FM_t <- read.table(file.path("indeksy", "FM.csv"), sep=",", header=TRUE)
+FM <- FM_t[-1]
+FM["Spectral Clustering (M=8)"] <- FM_t[1]
+FM["Spectral Clustering (M=15)"] <- read.table(file.path("indeksy", "FM_M15.csv"), sep=",", header=TRUE, row.names=NULL)[ , 2]
+FM["Spectral Clustering (M=25)"] <- read.table(file.path("indeksy", "FM_M25.csv"), sep=",", header=TRUE, row.names=NULL)[ , 2]
+FM <- t(FM)
+
+AR_t <- read.table(file.path("indeksy", "AR.csv"), sep=",", header=TRUE)
+AR <- AR_t[-1]
+AR["Spectral Clustering (M=8)"] <- AR_t[1]
+AR["Spectral Clustering (M=15)"] <- read.table(file.path("indeksy", "AR_M15.csv"), sep=",", header=TRUE, row.names=NULL)[ , 2]
+AR["Spectral Clustering (M=25)"] <- read.table(file.path("indeksy", "AR_M25.csv"), sep=",", header=TRUE, row.names=NULL)[ , 2]
+AR <- t(AR)
+
+FM_std_t <- read.table(file.path("indeksy", "FM_std.csv"), sep=",", header=TRUE)
+FM_std <- FM_std_t[-1]
+FM_std["Spectral Clustering (M=8)"] <- FM_std_t[1]
+FM_std <- t(FM_std)
+
+AR_std_t <- read.table(file.path("indeksy", "AR_std.csv"), sep=",", header=TRUE)
+AR_std <- AR_std_t[-1]
+AR_std["Spectral Clustering (M=8)"] <- AR_std_t[1]
+AR_std <- t(AR_std)
+```
+
+# [PADR] Praca domowa nr 4 -- raport
+
+## Wstęp
+
+W niniejszym raporcie analizuję działanie własnej implementacji spektralnego algorytmu analizy skupień. Algorytm ten uruchomiłem z trzema różnymi wartościami parametru $M$, czyli liczby najbliższych sąsiadów, to jest $8$, $15$ oraz $25$ i będę porównywał z szeregiem innych algorytmów analizy skupień.
+
+Z początku przeanalizuję skuteczność wyznaczoną przez indeks Fowlkesa-Mallowsa i skorygowany indeks Randa każdego z algorytmów. Następnie zbadam wpływ standaryzacji danych na skuteczności tych metod.
+
+
+## Wyniki w podziale na zbiór i algorytm
+### Indeks Fowlkesa–Mallowsa
+```{r, fig.height=7}
+(
+ggplot(reshape2::melt(FM))
+    +geom_tile(aes(Var1, Var2, fill=value))
+    +scale_fill_gradient(low = "black", high = "white")
+    +theme(legend.title = element_text(size = 10),
+           axis.title= element_blank(),
+           axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.4))
+    +labs(fill="Indeks FM")
+)
+```
+
+
+### Skorygowany indeks Randa
+```{r, fig.height=7}
+(
+ggplot(reshape2::melt(AR))
+    +geom_tile(aes(Var1, Var2, fill=value))
+    +scale_fill_gradient(low = "black", high = "white")
+    +theme(legend.title = element_text(size = 10),
+           axis.title   = element_blank(),
+           axis.text.x  = element_text(angle = 90, hjust = 1, vjust=0.4))
+    +labs(fill="Indeks AR")
+)
+```
+
+### Interpretacja
+Pierwsze co rzuca się w oczy po spojrzeniu na powyższe mapy ciepła, to fakt, że indeks Fowlkesa-Mallowsa bardziej wybacza błędy, ponieważ daje wyższe noty.
+
+Drugą widoczną rzeczą jest to, że niektóre zbiory są „prostsze” od innych, to znaczy każdy algorytm działa na takim zbiorze dość dobrze. Do zbiorów „prostych” możemy zaliczyć zbiory takie jak: `hepta`, `tetra`, `twodiamonds`, `r15` i `x1`.
+
+Ponadto patrząc na słupki odpowiadające danym metodom widzimy, że najgorzej radził sobie hierarchiczny algorytm skupień z metodą „single” -- w kolumnie tego algorytmu widnieje najwięcej czarnych kratek.
+
+Warto również zwrócić uwagę na trzy kolumny odpowiadające mojej implementacji algorytmu `Spectral Clustering` -- widoczne są różnice w zależności od doboru parametru najbliższych sąsiadów $M$.
+
+## Analiza średnich wyników algorytmów
+```{r}
+AVG <- reshape2::melt(t(
+    data.frame(
+        FM=apply(FM, 1, mean),
+        AR=apply(AR, 1, mean),
+        row.names=row.names(FM))))
+
+(
+ggplot(AVG)
+    +geom_bar(stat = "identity", position = "dodge", aes(x=Var2, y=value, fill=Var1))
+    +ylab("Srednia wartosc indeksu")
+    +scale_x_discrete(expand=c(0, 0))
+    +scale_y_continuous(expand=c(0, 0), limits=c(0, 1))
+    +theme_classic()
+    +theme(
+        axis.title.x = element_blank(),
+        axis.text.x  = element_text(angle=90, hjust = 1, vjust=0.4),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )
+    +labs(fill="Indeks")
+)
+```
+
+Powyższy wykres obrazuje średnią skuteczność każdej z metod. Widzimy, że na prowadzeniu jest algorytm z pakietu `Genie` a na drugim miejscu z dość zbliżonymi wynikami algorytm `Mclust` i `Spectral Clustering`. Jednocześnie widać, że zwiększenie parametru liczby sąsiadów $M$ z $8$ na większe wartości nieco podniosło skuteczność mojej implementacji.
+
+## Wpływ standaryzacji na wyniki
+```{r, fig.height=3}
+AVG_diff <- reshape2::melt(t(
+    data.frame(
+        FM=apply(FM[1:11, ]-FM_std, 1, mean),
+        AR=apply(AR[1:11, ]-AR_std, 1, mean),
+        row.names=row.names(FM_std))))
+
+(
+ggplot(AVG_diff)
+    +geom_bar(stat = "identity", position = "dodge", aes(x=Var2, y=value, fill=Var1))
+    +ylab("Srednia roznica")
+    +scale_x_discrete(expand=c(0, 0))
+    +scale_y_continuous(expand=c(0, 0), limits=c(-0.1, 0.1))
+    +theme_classic()
+    +theme(
+        axis.title.x = element_blank(),
+        axis.text.x  = element_text(angle=90, hjust = 1, vjust=0.4),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )
+    +labs(fill="Indeks")
+)
+```
+
+Powyższy wykres pokazuje nam, że w zasadzie żaden z testowanych algorytmów nie zyskuje na skuteczności przy standaryzacji zmiennych. Największy zysk jest rzędu $10^{-3}$.
+
+## Podsumowanie
+Algorytm spektralny analizy skupień *(Spectral Clustering)* okazał się być dość dobrym algorytmem. Znajduje się na podium, jeśli chodzi o średnie wartości indeksów. Jednakże jego przewaga nad konkurencją nie jest tak duża jak była w przypadku implementacji w Pythonie.
+
+W przeciwieństwie do implementacji z Pythona, w tej wersji modyfikacja parametru $M$ miała znaczenie. W przypadku moich testów zwiększenie tego parametru podniosło skuteczność algorytmu. Jednakże już na etapie testów zauważyłem, że przesadne zwiększenie tego parametru nie sprzyja wynikom predykcji. Z moich obserwacji wynika, że algorytm najlepiej działa dla „rozsądnych” liczb najbliższych sąsiadów

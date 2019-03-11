@@ -1,0 +1,3 @@
+Jeśli w którymś pliku .labels0.gz znajdzie się etykieta 0 (czyli najmniejsza wartość < 1), to proszę o zgłoszenie tegoż -- to jest BUG!! O_O (usunę dany zbiór z baterii)
+
+MG

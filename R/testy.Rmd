@@ -1,0 +1,93 @@
+---
+output:
+  pdf_document: default
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo=FALSE, fig.align='center', results='asis')
+```
+
+```{r, include=FALSE}
+
+source("spectral.R")
+source("testy_metody.R")
+```
+
+# Testy funkcji `spectral_clustering`
+
+Do testowania wykorzystałem zbiory, które wygenerowałem na czwartą pracę domową z PADPY. Porównam pobieżnie wyniki otrzymane przez implementację w Pythonie z tą z R dla takich samych parametrów.
+
+## Zbiór nr 1 -- *rozległe skupienia*
+### Wygląd zbioru
+
+Zbiór składa się z czterech skupień delikatnie „zahaczających” o siebie. Dodatkowo jeden ze zbiorów jest mocniej rozproszony niż pozostałe.
+```{r}
+rysuj_wzorzec("zbiory/spread")
+```
+
+### Testy algorytmu
+#### M=5
+```{r}
+testuj("zbiory/spread", M=5)
+```
+
+#### M=15
+```{r}
+testuj("zbiory/spread", M=15)
+```
+
+#### Interpretacja testu
+Widać, że algorytm w tym wydaniu nie radzi sobie najlepiej -- klasyfikacja jest dość chaotyczna, a zwiększenie liczby sąsiadów niekoniecznie pomaga.
+
+
+## Zbiór nr 2 -- splecione zbiory
+### Wygląd zbioru
+Zbiór składa się z dwóch prawie w pełni pokrywających się zbiorów znaczników.
+
+```{r}
+rysuj_wzorzec("zbiory/splecione")
+```
+
+\newpage
+### Testy algorytmu
+#### M=3
+```{r}
+testuj("zbiory/splecione", M=3)
+```
+
+#### M=85
+```{r}
+testuj("zbiory/splecione", M=85)
+```
+
+#### Interpretacja testu
+W porównaniu do testów na zbiorze nr 3 algorytm zaskakująco dobrze radzi, gdy skupienia są na siebie bardzo nałożone. Przykład dla $M=85$ bardzo dobrze pokazuje, że mierzenie dokładności algorytmu tylko jednym indeksem, bez weryfikacji z innymi jest nie najlepszym pomysłem.
+
+## Zbiór nr 3 -- crosshair
+### Wygląd zbioru
+Wygląd zbioru można porównać do celownika z gier komputerowych. Docelowo zbiór miał składać się z poprzeplatanych różnych skupień, które są blisko siebie. Dodatkowo te same skupienia są połączone ze sobą.
+
+```{r}
+rysuj_wzorzec("zbiory/crosshair")
+```
+
+### Testy algorytmu
+#### M=3
+```{r}
+testuj("zbiory/crosshair", M=8)
+```
+
+\newpage
+#### M=85
+```{r}
+testuj("zbiory/crosshair", M=30)
+```
+
+#### M=500
+```{r}
+testuj("zbiory/crosshair", M=500)
+```
+
+#### Interpretacja testu
+
+Widzimy, że zmiana liczby najbliższych sąsiadów $M$ może negatywnie wpływać na wynik działania algorytmu. Jedyny efekt jest taki, że dla $M=500$ indeks FM wzrósł, aczkolwiek etykiety nadal nie były zbyt dobrze dopasowane. Przypuszczam, że algorytm priorytetyzuje odległości między punktami w rozpoznawaniu skupień, przez co otrzymany wynik jest taki, a nie inny.
