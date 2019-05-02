@@ -7,7 +7,7 @@ W tym repozytorium zawarte są rozwiązania pracy domowych z kursów Programowan
  * `Mnn(X, M)` to funkcja, która dla danej macierzy X wielowymiarowych punktów wyznacza macierz zawierającą informację o *M* najbliższych sąsiadach każdego z punktów. **(Rcpp, Cython)**
 
  * `Mnn_graph(S)`, gdzie *S* jest macierzą wynikową powyższej metody. Funkcja ta generuje
-symetryczną macierz *G*, gdzie *G*[i][j] = 1, jeśli $i$-ty punkt jest jednym z *M* najbliższych sąsiadów punktu *j*-tego lub vice versa. Dodatkowo graf reprezentowany przez macierz sąsiedztwa *G* jest uspójniany i taka zakutalizowana macierz *G* jest zwracana. **(Cython)** 
+symetryczną macierz *G*, gdzie *G*[i][j] = 1, jeśli *i*-ty punkt jest jednym z *M* najbliższych sąsiadów punktu *j*-tego lub vice versa. Dodatkowo graf reprezentowany przez macierz sąsiedztwa *G* jest uspójniany i taka zakutalizowana macierz *G* jest zwracana. **(Cython)** 
 
  * `Laplacian_eigen(G, k)`, gdzie *k* > 1, a *G* jest wynikiem powyższej metody. Jest to funkcja, która wyznacza laplasian *L* grafu *G* i zwraca macierz składającą się z wektorów własnych macierzy *L*, które odpowiadają od 2 do *k*+1 co do wielkości wartości własnej.
 
